@@ -1,4 +1,4 @@
-package top.icinghuan.java_demo.java;
+package top.icinghuan.java_demo.javatest;
 
 /**
  * @author : xy

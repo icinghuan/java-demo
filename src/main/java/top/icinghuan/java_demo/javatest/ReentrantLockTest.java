@@ -1,4 +1,4 @@
-package top.icinghuan.java_demo.java;
+package top.icinghuan.java_demo.javatest;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;

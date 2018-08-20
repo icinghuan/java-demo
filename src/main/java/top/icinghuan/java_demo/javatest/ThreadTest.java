@@ -1,9 +1,7 @@
-package top.icinghuan.java_demo.java;
+package top.icinghuan.java_demo.javatest;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;

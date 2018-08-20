@@ -1,4 +1,4 @@
-package top.icinghuan.java_demo.java;
+package top.icinghuan.java_demo.javatest;
 
 import java.util.ArrayList;
 import java.util.List;
