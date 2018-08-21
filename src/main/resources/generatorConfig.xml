@@ -20,20 +20,20 @@
                         password="asdfghjkl">
         </jdbcConnection>
 
-        <javaModelGenerator targetPackage="top.icinghuan.java_demo.model.tables.generated"
+        <javaModelGenerator targetPackage="top.icinghuan.demo.model.tables.generated"
                             targetProject="src/main/java">
             <property name="enableSubPackages" value="true"/>
             <property name="trimStrings" value="true"/>
             <property name="constructorBased" value="false"/>
         </javaModelGenerator>
 
-        <sqlMapGenerator targetPackage="top.icinghuan.java_demo.model.tables.generated"
+        <sqlMapGenerator targetPackage="top.icinghuan.demo.model.tables.generated"
                          targetProject="src/main/resources">
             <property name="enableSubPackages" value="true"/>
         </sqlMapGenerator>
 
         <javaClientGenerator type="XMLMAPPER"
-                             targetPackage="top.icinghuan.java_demo.model.tables.generated"
+                             targetPackage="top.icinghuan.demo.model.tables.generated"
                              targetProject="src/main/java">
             <property name="enableSubPackages" value="true"/>
         </javaClientGenerator>
