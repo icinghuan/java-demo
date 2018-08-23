@@ -11,7 +11,8 @@ import java.util.List;
 public class JavaMain {
     public static void main(String[] args) {
         List<Long> list = new ArrayList<>();
-//        list = null;
+        list = null;
         System.out.println(list.size());
+        System.out.println(list.get(0));
     }
 }
