@@ -7,6 +7,8 @@ import top.icinghuan.demo.dao.UserDao;
 import top.icinghuan.demo.model.tables.generated.User;
 import top.icinghuan.demo.service.UserService;
 
+import java.util.List;
+
 /**
  * @author : xy
  * @date : 2018/8/21
@@ -31,6 +33,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public User getByUserName(String userName) {
         return userDao.selectByUserName(userName);
+    }
+
+    @Override
+    public List<User> getListByUserName(String userName) {
+        return userDao.selectListByUserName(userName);
     }
 
     @Override
