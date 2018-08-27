@@ -1,12 +1,10 @@
 package top.icinghuan.demo.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import top.icinghuan.demo.controller.req.UserReq;
 import top.icinghuan.demo.model.tables.generated.User;
 import top.icinghuan.demo.service.UserService;
@@ -38,4 +36,21 @@ public class UserCtrl extends BaseController {
         return Ok(jsonOk(user.getUserId()));
     }
 
+    @GetMapping("/get")
+    public ResponseEntity getUser(@RequestParam(required = false) Long id,
+                                  @RequestParam(required = false) String userName) {
+        if (id != null) {
+            User optional = userService.getByUserId(id);
+            if (optional != null) {
+                return Ok(jsonOk(optional));
+            }
+        }
+        if (StringUtils.isNotEmpty(userName)) {
+            User optional = userService.getByUserName(userName);
+            if (optional != null) {
+                return Ok(jsonOk(optional));
+            }
+        }
+        return BadRequest(jsonMsg("bad_request","找不到用户"));
+    }
 }

@@ -9,6 +9,7 @@ import top.icinghuan.demo.model.tables.generated.User;
 import top.icinghuan.demo.model.tables.generated.UserExample;
 import top.icinghuan.demo.model.tables.generated.UserMapper;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -18,7 +19,7 @@ import java.util.List;
  */
 @Slf4j
 @Repository
-public class UserDaoImpl extends DaoBase implements UserDao{
+public class UserDaoImpl extends DaoBase implements UserDao {
 
     private UserMapper getMapper() {
         return mapper(UserMapper.class);
@@ -43,6 +44,18 @@ public class UserDaoImpl extends DaoBase implements UserDao{
             return null;
         } else {
             return list.get(0);
+        }
+    }
+
+    @Override
+    public List<User> selectListByUserName(String userName) {
+        UserExample example = new UserExample();
+        example.createCriteria().andUserNameLike("%" + userName + "%");
+        List<User> list = getMapper().selectByExample(example);
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        } else {
+            return list;
         }
     }
 
