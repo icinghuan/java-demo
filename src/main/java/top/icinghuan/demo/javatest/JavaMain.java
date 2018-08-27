@@ -1,5 +1,6 @@
 package top.icinghuan.demo.javatest;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import java.util.List;
  */
 public class JavaMain {
     public static void main(String[] args) {
+        System.out.println(LocalDate.ofYearDay(2018,151));
         List<Long> list = new ArrayList<>();
         list = null;
         System.out.println(list.size());
