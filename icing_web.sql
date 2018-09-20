@@ -7,8 +7,8 @@
  Source Host           : localhost:3306
  Source Schema         : icing_web
 
- Target Server Type    : MySQL
- Target Server Version : 50722
+ Target2 Server Type    : MySQL
+ Target2 Server Version : 50722
  File Encoding         : 65001
 
  Date: 21/08/2018 16:01:51
