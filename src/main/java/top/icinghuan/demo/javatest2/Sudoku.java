@@ -64,6 +64,7 @@ public class Sudoku extends JFrame implements ActionListener {
     }
 
     public Sudoku() {
+        // TODO 文本居中显示
         set1 = new SimpleAttributeSet();
         StyleConstants.setForeground(set1, Color.BLACK);
         StyleConstants.setAlignment(set1, StyleConstants.ALIGN_CENTER);
@@ -152,9 +153,7 @@ public class Sudoku extends JFrame implements ActionListener {
                 JOptionPane.showMessageDialog(null, "Can not save the game!", "Save Game", JOptionPane.PLAIN_MESSAGE);
                 return;
             }
-            // TODO Save Game
-//            Frame f = new Frame("Save Game");
-//            FileDialog fileDialog = new FileDialog(f, "Save Game", FileDialog.SAVE);
+            JOptionPane.showMessageDialog(null, "Please copy the follow string:\n" + gameToString(), "Save Game", JOptionPane.PLAIN_MESSAGE);
         }
         if (e.getSource() == jMenuItems[2]) {
             // TODO Load Game
@@ -183,7 +182,10 @@ public class Sudoku extends JFrame implements ActionListener {
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
                 if (!NUM_SET.contains(gameData[i][j])) {
-                    gameData[i][j] = 0;
+                    if (update) {
+                        gameData[i][j] = 0;
+                    }
+                    gameFlags[i][j] = false;
                     flag = false;
                 }
             }
@@ -194,10 +196,16 @@ public class Sudoku extends JFrame implements ActionListener {
                 flags[j] = false;
             }
             for (int j = 0; j < 9; j++) {
+                beforeEvaluate(i, j, flags, update);
+            }
+            for (int j = 0; j < 9; j++) {
                 evaluate(i, j, flags, update);
             }
             for (int j = 0; j < 10; j++) {
                 flags[j] = false;
+            }
+            for (int j = 0; j < 9; j++) {
+                beforeEvaluate(j, i, flags, update);
             }
             for (int j = 0; j < 9; j++) {
                 evaluate(j, i, flags, update);
@@ -212,17 +220,31 @@ public class Sudoku extends JFrame implements ActionListener {
     private boolean checkSudokuNineGrids(boolean update) {
         boolean flag = true;
         for (int k = 0; k < 9; k++) {
+            boolean[] flags = new boolean[10];
+            for (int j = 0; j < 10; j++) {
+                flags[j] = false;
+            }
             for (int i = (k * 3) % 9; i < (k * 3) % 9 + 3; i++) {
-                boolean[] flags = new boolean[10];
-                for (int j = 0; j < 10; j++) {
-                    flags[j] = false;
+                for (int j = (k / 3) * 3; j < (k / 3) * 3 + 3; j++) {
+                    beforeEvaluate(i, j, flags, update);
                 }
+            }
+            for (int i = (k * 3) % 9; i < (k * 3) % 9 + 3; i++) {
                 for (int j = (k / 3) * 3; j < (k / 3) * 3 + 3; j++) {
                     evaluate(i, j, flags, update);
                 }
             }
         }
         return flag;
+    }
+
+    private void beforeEvaluate(int i, int j, boolean[] flags, boolean update) {
+        if (!update) {
+            if (!jTextPanes[i][j].isEditable()) {
+                gameFlags[i][j] = true;
+                flags[gameData[i][j]] = true;
+            }
+        }
     }
 
     private boolean evaluate(int i, int j, boolean[] flags, boolean update) {
@@ -384,6 +406,7 @@ public class Sudoku extends JFrame implements ActionListener {
     }
 
     public static void main(String[] args) {
+        // TODO test
         Sudoku sudoku = new Sudoku();
     }
 }
