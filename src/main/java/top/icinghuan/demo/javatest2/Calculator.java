@@ -1,4 +1,4 @@
-package top.icinghuan.demo.javatest;
+package top.icinghuan.demo.javatest2;
 
 import javax.swing.*;
 import java.awt.*;
