@@ -27,10 +27,10 @@ public class Sudoku extends JFrame implements ActionListener {
     private static final Set<String> STRING_SET = Sets.newHashSet("", "1", "2", "3", "4", "5", "6", "7", "8", "9");
 
     private static ThreadFactory namedThreadFactory = new ThreadFactoryBuilder()
-            .setNameFormat("demo-pool-%d").build();
+            .setNameFormat("single-pool-%d").build();
     private static ExecutorService singleThreadPool = new ThreadPoolExecutor(16, 32,
             0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(1024), namedThreadFactory, new ThreadPoolExecutor.AbortPolicy());
-    private JTextPane[][] jTextPanes = new JTextPane[9][9];
+    private JTextPane[][] jTextPanes = new  JTextPane[9][9];
     private JPanel[] jPanels = new JPanel[9];
     private JMenu[] jMenus;
     private JMenuItem[] jMenuItems;
