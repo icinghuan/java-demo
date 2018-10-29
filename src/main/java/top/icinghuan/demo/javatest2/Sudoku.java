@@ -12,6 +12,8 @@ import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -30,7 +32,7 @@ public class Sudoku extends JFrame implements ActionListener {
             .setNameFormat("single-pool-%d").build();
     private static ExecutorService singleThreadPool = new ThreadPoolExecutor(16, 32,
             0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<Runnable>(1024), namedThreadFactory, new ThreadPoolExecutor.AbortPolicy());
-    private JTextPane[][] jTextPanes = new  JTextPane[9][9];
+    private JTextPane[][] jTextPanes = new JTextPane[9][9];
     private JPanel[] jPanels = new JPanel[9];
     private JMenu[] jMenus;
     private JMenuItem[] jMenuItems;
@@ -58,8 +60,15 @@ public class Sudoku extends JFrame implements ActionListener {
 
     private void threadRun() {
         singleThreadPool.execute(() -> {
-            getSudoku();
-            showSudoku();
+            while (!finishGame()) {
+                getSudoku();
+                showSudoku();
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         });
     }
 
@@ -109,26 +118,37 @@ public class Sudoku extends JFrame implements ActionListener {
         }
         getContentPane().add(jPanel, BorderLayout.CENTER);
 
-        jMenus = new JMenu[2];
+        jMenus = new JMenu[3];
         jMenus[0] = new JMenu("Game");
-        jMenus[1] = new JMenu("Sudoku");
-        jMenuItems = new JMenuItem[5];
+        jMenus[1] = new JMenu("Auto");
+        jMenus[2] = new JMenu("Sudoku");
+        jMenuItems = new JMenuItem[6];
         jMenuItems[0] = new JMenuItem("New Game");
         jMenuItems[1] = new JMenuItem("Save Game");
         jMenuItems[2] = new JMenuItem("load Game");
-        jMenuItems[3] = new JMenuItem("About");
-        jMenuItems[4] = new JMenuItem("Exit");
-        for (int i = 0; i < 5; i++) {
+        jMenuItems[3] = new JMenuItem("Automatic Solution");
+        jMenuItems[4] = new JMenuItem("About");
+        jMenuItems[5] = new JMenuItem("Exit");
+        for (int i = 0; i < 6; i++) {
             jMenuItems[i].addActionListener(this);
-            if (i < 3) {
-                jMenus[0].add(jMenuItems[i]);
-            } else {
-                jMenus[1].add(jMenuItems[i]);
+            switch (i) {
+                case 0:
+                case 1:
+                case 2:
+                    jMenus[0].add(jMenuItems[i]);
+                    break;
+                case 3:
+                    jMenus[1].add(jMenuItems[i]);
+                    break;
+                case 4:
+                case 5:
+                    jMenus[2].add(jMenuItems[i]);
+                    break;
             }
         }
 
         JMenuBar jMenuBar = new JMenuBar();
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 3; i++) {
             jMenuBar.add(jMenus[i]);
         }
         setJMenuBar(jMenuBar);
@@ -153,10 +173,11 @@ public class Sudoku extends JFrame implements ActionListener {
                 JOptionPane.showMessageDialog(null, "Can not save the game!", "Save Game", JOptionPane.PLAIN_MESSAGE);
                 return;
             }
-            JOptionPane.showMessageDialog(null, "Please copy the follow string:\n" + gameToString(), "Save Game", JOptionPane.PLAIN_MESSAGE);
+            JOptionPane.showInputDialog(null, "Please copy the follow string:\n", "Save Game", JOptionPane.PLAIN_MESSAGE, null, null, gameToString());
         }
         if (e.getSource() == jMenuItems[2]) {
-            // TODO Load Game
+            String str = JOptionPane.showInputDialog(null, "Please paste the string you have saved:\n", "Load Game", JOptionPane.PLAIN_MESSAGE);
+            loadFromString(str);
             if (!checkSudoku(false)) {
                 JOptionPane.showMessageDialog(null, "Can not load the game!", "Load Game", JOptionPane.PLAIN_MESSAGE);
                 return;
@@ -167,11 +188,16 @@ public class Sudoku extends JFrame implements ActionListener {
                     jTextPanes[i][j].setEditable(true);
                 }
             }
+            threadRun();
         }
         if (e.getSource() == jMenuItems[3]) {
-            JOptionPane.showMessageDialog(null, "Sudoku\nVersion: 0.1\nAuthor: icinghuan", "About", JOptionPane.PLAIN_MESSAGE);
+            beforeSolveSoduku();
+            solveSoduku();
         }
         if (e.getSource() == jMenuItems[4]) {
+            JOptionPane.showMessageDialog(null, "Sudoku\nVersion: 0.1\nAuthor: icinghuan", "About", JOptionPane.PLAIN_MESSAGE);
+        }
+        if (e.getSource() == jMenuItems[5]) {
             System.exit(0);
         }
 
@@ -181,6 +207,7 @@ public class Sudoku extends JFrame implements ActionListener {
         boolean flag = true;
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
+                gameFlags[i][j] = true;
                 if (!NUM_SET.contains(gameData[i][j])) {
                     if (update) {
                         gameData[i][j] = 0;
@@ -199,7 +226,7 @@ public class Sudoku extends JFrame implements ActionListener {
                 beforeEvaluate(i, j, flags, update);
             }
             for (int j = 0; j < 9; j++) {
-                evaluate(i, j, flags, update);
+                flag = evaluate(i, j, flags, update);
             }
             for (int j = 0; j < 10; j++) {
                 flags[j] = false;
@@ -208,7 +235,7 @@ public class Sudoku extends JFrame implements ActionListener {
                 beforeEvaluate(j, i, flags, update);
             }
             for (int j = 0; j < 9; j++) {
-                evaluate(j, i, flags, update);
+                flag = evaluate(j, i, flags, update);
             }
         }
         if (!checkSudokuNineGrids(update)) {
@@ -231,7 +258,7 @@ public class Sudoku extends JFrame implements ActionListener {
             }
             for (int i = (k * 3) % 9; i < (k * 3) % 9 + 3; i++) {
                 for (int j = (k / 3) * 3; j < (k / 3) * 3 + 3; j++) {
-                    evaluate(i, j, flags, update);
+                    flag = evaluate(i, j, flags, update);
                 }
             }
         }
@@ -241,7 +268,6 @@ public class Sudoku extends JFrame implements ActionListener {
     private void beforeEvaluate(int i, int j, boolean[] flags, boolean update) {
         if (!update) {
             if (!jTextPanes[i][j].isEditable()) {
-                gameFlags[i][j] = true;
                 flags[gameData[i][j]] = true;
             }
         }
@@ -259,7 +285,6 @@ public class Sudoku extends JFrame implements ActionListener {
                 gameFlags[i][j] = false;
                 flag = false;
             } else {
-                gameFlags[i][j] = true;
                 flags[gameData[i][j]] = true;
             }
         }
@@ -327,8 +352,13 @@ public class Sudoku extends JFrame implements ActionListener {
         Random random = new Random();
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
-                gameData[i][j] = random.nextInt(10);
-                gameFlags[i][j] = false;
+                if (random.nextInt(100) <= 20) {
+                    gameData[i][j] = random.nextInt(10);
+                    gameFlags[i][j] = false;
+                } else {
+                    gameData[i][j] = 0;
+                    gameFlags[i][j] = false;
+                }
             }
         }
         checkSudoku(true);
@@ -340,17 +370,7 @@ public class Sudoku extends JFrame implements ActionListener {
                 }
             }
         }
-        singleThreadPool.execute(() -> {
-            while (!finishGame()) {
-                getSudoku();
-                showSudoku();
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
+        threadRun();
     }
 
     private boolean finishGame() {
@@ -377,8 +397,14 @@ public class Sudoku extends JFrame implements ActionListener {
         return encrypt(str);
     }
 
-    private void loadFromData(String str) {
+    private void loadFromString(String str) {
         String s = decrypt(str);
+        Integer[][] tempGameData = new Integer[9][9];
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                tempGameData[i][j] = gameData[i][j];
+            }
+        }
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
                 gameData[i][j] = 0;
@@ -390,6 +416,7 @@ public class Sudoku extends JFrame implements ActionListener {
                 gameData[i / 9][i % 9] = Integer.parseInt(ch.toString());
             } catch (Exception e) {
                 e.printStackTrace();
+                gameData = tempGameData;
             }
         }
         checkSudoku(true);
@@ -403,6 +430,90 @@ public class Sudoku extends JFrame implements ActionListener {
     private String decrypt(String str) {
         // TODO decrypt
         return str;
+    }
+
+    private int count;
+    private int times;
+
+    private void beforeSolveSoduku() {
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                jTextPanes[i][j].setEditable(false);
+            }
+        }
+        checkSudoku(true);
+        count = 0;
+        times = 0;
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (gameData[i][j] == 0) {
+                    count++;
+                }
+            }
+        }
+//        singleThreadPool.execute(() -> {
+//            while (!finishGame()) {
+//                showSudoku();
+//                try {
+//                    Thread.sleep(2000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
+    }
+
+    private void solveSoduku() {
+        // TODO auto solve
+        if (count == 0) {
+            return;
+        }
+        for (int i = 0; i < 9; i++) {
+            for (int j = 0; j < 9; j++) {
+                if (gameData[i][j] == 0) {
+                    for (Integer k : getAvailableNumbers(i, j)) {
+                        gameData[i][j] = k;
+                        count--;
+                        for (int l = 0; l < 9; l++) {
+                            for (int m = 0; m < 9; m++) {
+                                System.out.printf("%d ",gameData[l][m]);
+                            }
+                            System.out.println();
+                        }
+                        solveSoduku();
+                        if (count == 0) {
+                            return;
+                        }
+                        count++;
+                        gameData[i][j] = 0;
+                    }
+                }
+            }
+        }
+    }
+
+    private List<Integer> getAvailableNumbers(int i, int j) {
+        boolean[] flags = new boolean[10];
+        for (int k = 0; k < 10; k++) {
+            flags[k] = true;
+        }
+        for (int k = 0; k < 9; k++) {
+            flags[gameData[i][k]] = false;
+            flags[gameData[k][j]] = false;
+        }
+        int k = i / 3 * 3 + j / 3;
+        for (int k1 = (k * 3) % 9; i < (k * 3) % 9 + 3; i++) {
+            for (int k2 = (k / 3) * 3; j < (k / 3) * 3 + 3; j++) {
+                flags[gameData[k1][k2]] = false;
+            }
+        }
+        List<Integer> result = new ArrayList<>();
+        for (Integer l = 1; l < 10; l++) {
+            if (flags[l]) {
+                result.add(l);
+            }
+        }
+        return result;
     }
 
     public static void main(String[] args) {
