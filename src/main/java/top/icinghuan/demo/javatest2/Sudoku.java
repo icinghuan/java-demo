@@ -40,6 +40,7 @@ public class Sudoku extends JFrame implements ActionListener {
 
     private Integer[][] gameData = new Integer[9][9];
     private boolean[][] gameFlags = new boolean[9][9];
+    private int count;
 
     DocumentListener documentListener = new DocumentListener() {
         @Override
@@ -251,13 +252,13 @@ public class Sudoku extends JFrame implements ActionListener {
             for (int j = 0; j < 10; j++) {
                 flags[j] = false;
             }
-            for (int i = (k * 3) % 9; i < (k * 3) % 9 + 3; i++) {
-                for (int j = (k / 3) * 3; j < (k / 3) * 3 + 3; j++) {
+            for (int i = (k / 3) * 3; i < (k / 3) * 3 + 3; i++) {
+                for (int j = (k * 3) % 9; j < (k * 3) % 9 + 3; j++) {
                     beforeEvaluate(i, j, flags, update);
                 }
             }
-            for (int i = (k * 3) % 9; i < (k * 3) % 9 + 3; i++) {
-                for (int j = (k / 3) * 3; j < (k / 3) * 3 + 3; j++) {
+            for (int i = (k / 3) * 3; i < (k / 3) * 3 + 3; i++) {
+                for (int j = (k * 3) % 9; j < (k * 3) % 9 + 3; j++) {
                     flag = evaluate(i, j, flags, update);
                 }
             }
@@ -432,18 +433,15 @@ public class Sudoku extends JFrame implements ActionListener {
         return str;
     }
 
-    private int count;
-    private int times;
-
     private void beforeSolveSoduku() {
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
                 jTextPanes[i][j].setEditable(false);
             }
         }
+        getSudoku();
         checkSudoku(true);
         count = 0;
-        times = 0;
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
                 if (gameData[i][j] == 0) {
@@ -451,44 +449,49 @@ public class Sudoku extends JFrame implements ActionListener {
                 }
             }
         }
-//        singleThreadPool.execute(() -> {
-//            while (!finishGame()) {
-//                showSudoku();
-//                try {
-//                    Thread.sleep(2000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        });
     }
 
     private void solveSoduku() {
-        // TODO auto solve
         if (count == 0) {
+            showSudoku();
             return;
         }
+        int min = 10;
+        int ti = -1;
+        int tj = -1;
         for (int i = 0; i < 9; i++) {
             for (int j = 0; j < 9; j++) {
                 if (gameData[i][j] == 0) {
-                    for (Integer k : getAvailableNumbers(i, j)) {
-                        gameData[i][j] = k;
-                        count--;
-                        for (int l = 0; l < 9; l++) {
-                            for (int m = 0; m < 9; m++) {
-                                System.out.printf("%d ",gameData[l][m]);
-                            }
-                            System.out.println();
-                        }
-                        solveSoduku();
-                        if (count == 0) {
-                            return;
-                        }
-                        count++;
-                        gameData[i][j] = 0;
+                    int size = getAvailableNumbers(i, j).size();
+                    if (min > size) {
+                        min = size;
+                        ti = i;
+                        tj = j;
                     }
                 }
             }
+        }
+        try {
+            for (Integer k : getAvailableNumbers(ti, tj)) {
+                gameData[ti][tj] = k;
+                count--;
+//                for (int l = 0; l < 9; l++) {
+//                    for (int m = 0; m < 9; m++) {
+//                        System.out.printf("%d ", gameData[l][m]);
+//                    }
+//                    System.out.println();
+//                }
+                solveSoduku();
+                if (count == 0) {
+                    showSudoku();
+                    return;
+                }
+                count++;
+                gameData[ti][tj] = 0;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "No Answer!", "Error", JOptionPane.PLAIN_MESSAGE);
         }
     }
 
@@ -501,9 +504,9 @@ public class Sudoku extends JFrame implements ActionListener {
             flags[gameData[i][k]] = false;
             flags[gameData[k][j]] = false;
         }
-        int k = i / 3 * 3 + j / 3;
-        for (int k1 = (k * 3) % 9; i < (k * 3) % 9 + 3; i++) {
-            for (int k2 = (k / 3) * 3; j < (k / 3) * 3 + 3; j++) {
+        int k = (i / 3) * 3 + j / 3;
+        for (int k1 = (k / 3) * 3; k1 < (k / 3) * 3 + 3; k1++) {
+            for (int k2 = (k * 3) % 9; k2 < (k * 3) % 9 + 3; k2++) {
                 flags[gameData[k1][k2]] = false;
             }
         }
