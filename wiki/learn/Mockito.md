@@ -107,7 +107,26 @@ verify(mockedList, atMost(5)).add("three times");
  // Oh, and A + B can be mixed together at will
 ```
 
-- verifyZeroInteractions 验证对象间没有交互
+- verifyNoMoreInteractions 查找Mock对象的冗余调用，验证传入的这些mock对象是否存在没有验证过的调用方法
+
+```
+//using mocks
+mockedList.add("one");
+mockedList.add("two");
+
+verify(mockedList).add("one");
+
+//following verification will fail
+verifyNoMoreInteractions(mockedList);
+```
+
+- verifyZeroInteractions 验证Mock对象没有调用过，实际上和verifyNoMoreInteractions的实现是一样的
+
+```
+public static void verifyZeroInteractions(Object... mocks) {
+    MOCKITO_CORE.verifyNoMoreInteractions(mocks);
+}
+```
 
 ```
 //using mocks - only mockOne is interacted
@@ -121,19 +140,6 @@ verify(mockOne, never()).add("two");
 
 //verify that other mocks were not interacted
 verifyZeroInteractions(mockTwo, mockThree);
-```
-
-- verifyNoMoreInteractions 查找冗余的调用
-
-```
-//using mocks
-mockedList.add("one");
-mockedList.add("two");
-
-verify(mockedList).add("one");
-
-//following verification will fail
-verifyNoMoreInteractions(mockedList);
 ```
 
 ### 2. stub 打桩
