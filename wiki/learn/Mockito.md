@@ -15,7 +15,7 @@ Mockito框架，能够Mock对象、验证结果以及打桩。
 
 ### 1. Verify 验证
 
-- 验证方法是否执行过 `verify(Object).method();`
+- 验证方法是否执行过 `verify(mock).method();`
 
 ```
 //Let's import Mockito statically so that the code looks clearer
@@ -33,7 +33,7 @@ verify(mockedList).add("one");
 verify(mockedList).clear();
 ```
 
-- 验证执行次数 `verfiy(Object, times()/at..()).method();`
+- 验证执行次数 `verfiy(mock, times()/at..()).method();`
 
 | 方法 | 作用 | 备注 |
 | :-: | :-: | :-: |
@@ -152,7 +152,7 @@ verifyZeroInteractions(mockTwo, mockThree);
 
 ** 打桩 **
 
-- `when(Object.method()).then...();`
+- `when(mock.method()).then...();`
 
 | 方法 | 作用 | 备注 |
 | :--: | :--: | :--: |
@@ -198,7 +198,7 @@ when(mock.someMethod(anyString())).thenAnswer(
  System.out.println(mock.someMethod("foo"));
  ```
 
-- `do..().when(Object).method();`
+- `do..().when(mock).method();`
 
 | 方法 | 作用 | 备注 |
 | :--: | :--: | :--: |
