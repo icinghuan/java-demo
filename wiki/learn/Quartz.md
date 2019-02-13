@@ -15,7 +15,7 @@ JobBuilder - 接受Job实现类，生成JobDetail实例
 Trigger - 触发器，定义触发的条件
 TriggerBuilder - 用于构建Trigger实例
 Scheduler - 任务调度器，所有的调度都是由它控制
-SchedulerFactory – 用于创建Scheduler的工厂类
+SchedulerFactory – 用于创建Scheduler的工厂类
 ```
 
 ![Quartz](Quartz.jpg)
@@ -43,7 +43,7 @@ JobDataMap包含了序列化的数据对象，在job实例执行时可以使用�
 - 错过触发(misfire Instructions)
 - 日历 (calendar)
 
-**jobdetail可以对应多个trigger，但是一个trigger只能对应一个job**
+**JobDetail可以对应多个Trigger，但是一个Trigger只能对应一个Job**
 
 ### Trigger的几种实现
 
@@ -160,8 +160,13 @@ Quartz提供了一个用于插入附加功能的接口（org.quartz.spi.Schedule
 ### 参考
 
 http://www.quartz-scheduler.org/
+
 https://github.com/quartz-scheduler/quartz
+
 https://www.w3cschool.cn/quartz_doc/
+
 https://blog.csdn.net/qwe6112071/article/details/70844587
+
 https://www.jianshu.com/p/bab8e4e32952
+
 http://royliu.me/2017/09/09/quartz2-x-code-anylse-runEngine-threadModel/
