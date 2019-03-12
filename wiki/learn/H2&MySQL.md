@@ -23,11 +23,13 @@ H2 不支持 SELECT ... For Update
 https://blog.csdn.net/achuo/article/details/80624223
 
 1. 索引名全局不重复
+不起索引名，以后修改索引的时候会有新的问题。mysql默认命名和H2不一样，会导致有个执行不了
 
-2. 
+2. tinyint(1) 0/1不转为false/true
 
 3. 
 
+http://matthewcasperson.blogspot.com/2013/07/exporting-from-mysql-to-h2.html
 
 ```
 
