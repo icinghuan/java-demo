@@ -1,6 +1,6 @@
 # H2数据库和MySQL的兼容问题
 
-H2数据库：开源的关系数据库
+H2数据库：开源的关系型数据库
 
 ```
 Welcome to H2, the Java SQL database. The main features of H2 are:
@@ -21,6 +21,12 @@ H2 不支持 SELECT ... For Update
 和Mysql的兼容性问题
 
 https://blog.csdn.net/achuo/article/details/80624223
+
+1. 索引名全局不重复
+
+2. 
+
+3. 
 
 
 ```
