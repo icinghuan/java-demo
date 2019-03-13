@@ -1,6 +1,6 @@
 # H2数据库和MySQL的兼容问题
 
-H2数据库：开源的关系型数据库
+**H2数据库是一个开源的关系型数据库**
 
 ```
 Welcome to H2, the Java SQL database. The main features of H2 are:
@@ -10,88 +10,92 @@ Embedded and server modes; in-memory databases
 Browser based Console application
 Small footprint: around 2 MB jar file size
 ```
+使用H2内存数据库来模拟数据库环境，能够保证单元测试不依赖于数据库。
 
-MySQL数据库
+但是H2和MySQL还是略有不同的，在开发时写的SQL都是以MySQL为准，很有可能在H2数据库中无法运行或遇到冲突。
+
+### 1. 索引名全局唯一
+索引名全局唯一，如果起了重复的索引名，H2将会报错：`Cause: org.H2.jdbc.JdbcSQLException: Index "CREATED_AT" already exists;`
+解决方法：
+- 起名时要起一个全局不重复的名字
+- 不起索引名，这样MySQL和H2都会产生一个默认索引名，且在H2中不会发生索引名重复的问题。
+
+但不起索引名，以后修改索引的时候会有新的问题。MySQL默认命名和H2不一样，会导致有个执行不了，这时只有再修改原先的sql，起一个索引名才能解决。
+
+### 2. H2中 tinyint(1) 不转为boolean
 
 
-h2数据库的坑？ 比如索引名，sql略有不同（alter column），tinyint(1) 0/1不转为false/true
-不起索引名，以后修改索引的时候会有新的问题。mysql默认命名和H2不一样，会导致有个执行不了
-H2 不支持 SELECT ... For Update
-可能H2对临时表支持不够友好，放在migration中会报语法错误，放在这里
-和Mysql的兼容性问题
 
-https://blog.csdn.net/achuo/article/details/80624223
+### 3. H2 不支持 SELECT FOR UPDATE
 
-1. 索引名全局不重复
-不起索引名，以后修改索引的时候会有新的问题。mysql默认命名和H2不一样，会导致有个执行不了
 
-2. tinyint(1) 0/1不转为false/true
 
-3. 
+### 4. H2 不支持 UPDATE JOIN
 
-http://matthewcasperson.blogspot.com/2013/07/exporting-from-mysql-to-h2.html
-
+```sql
+UPDATE t1 JOIN t2 ON t1.account_id = t2.account_no  set created_by_user_id = user_id;
 ```
 
+在H2中使用JOIN会报错`Cause: org.h2.jdbc.JdbcSQLException: Syntax error`
+
+解决办法:
+```sql
+update t1 set created_by_user_id = (select user_id from t2 where t1.account_id = t2.account_no);
 ```
 
-1) 不支持表级别的Comment
-有表SQL如下：
+写到other_scripts中，不放在H2中执行
 
-CREATE TABLE `ddc_line` (
-  `Id` varchar(36) NOT NULL COMMENT '序号',
-  `StartArea` int(11) DEFAULT NULL COMMENT '出发区域',
-  `ArrivalArea` int(11) DEFAULT NULL COMMENT '目的区域',
-  `Updater` varchar(36) DEFAULT NULL COMMENT '更新人',
-  `UpdateTime` datetime DEFAULT NULL COMMENT '更新时间' ,
-  `Status` int(11) DEFAULT NULL COMMENT '是否删除'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT= '区域路线信息列表' ;
-列名后面的COMMENT是支持的，但是最后面) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT= '区域路线信息列表' ; 中的COMMENT不支持。删掉后面的COMMENT即可。
+### 5. H2不支持表级别的Comment
+```sql
+CREATE TABLE `test` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `value` TINYINT(1) NOT NULL DEFAULT 0 COMMENT 'value',
+  `desc` varchar(100) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `created_at` (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT 'comment';
+```
+在H2中，列级别的COMMENT是支持的，但是表级别的COMMENT不支持
 
-2) 插入语句的单引号中的\'不支持
-有如下SQL，其中一个字段存的就是另一个SQL，里面带有单引号：
+解决方法：删掉表级别的COMMENT即可
 
-INSERT INTO `dataauthorityconfig` VALUES ( '1', '部门权限', 'select d.UserId, a.RoleId,b.Id DynamicId,b.DeptName DynamicName,c.ConfigName,c.ConfigType,a.RootDynamicId\n  from RoleDataAuthority a\n left join Dept b on a.DynamicId=b.Id\n left join DataAuthorityConfig c on a.DataAuthorityConfigId=c.Id\n left join RoleUser d on d.RoleId=a.RoleId\n left join `User` e on d.UserId=e.Id\n where a.`Status`=1 and b.`Status`=1 and d.`Status`=1 and e.`Status`=1\n and c.Id={0} and e.LoginName=\'{1}\'', '1', '2', null, null , '2016-05-27 14:30:49' , '1' , '1' , null, '1');
-MySQL支持双引号包含字符串，可以把内容中包含的单引号改为双引号，但其他情况可能会涉及到业务调整。另外，不能将包含字符串的单引号改为双引号，H2会把双引号中的内容当做列名处理。
+### 6. H2不支持`\'`与`"`
+有如下SQL，其中一个字段值中有单引号：
+```sql
+INSERT INTO `test`(`value`, `desc`) VALUES (0,'\'abc\'');
+```
+MySQL支持双引号包含字符串，可以把`'\'abc\''`改为`"'abc'"`。
+而在H2中，这两种写法都会报错`Cause: org.h2.jdbc.JdbcSQLException: Syntax error in SQL statement`
 
-3) H2 UNIQUE KEY是数据库级别的
-H2 UNIQUE KEY不是表级别的，MySQL是表级别的，转为H2后容易出现UNIQUE KEY重复。删掉UNIQUE KEY或者修改KEY的名称即可。
-
-4) 无法执行多个Update语句
-如下SQL配置可以在MySQL中执行多次Update，但是H2执行多条就会报错，说parameterIndex有问题，执行一条没有问题。这个问题暂时没有替代解决方案，我的单元测试就只测试了插入一条数据。
-
-</update >
-    <update id="deleteByParam" parameterType="com.szyciov.entity.chargerule.FloatRatio" >
-       update ddc_float_ratio set status = 2 where status = 1
-       <if test="type != 0">
-              and type = ${type}
-       </if >
-       <if test="year != 0">
-              and year = ${year}
-       </if >
-       <if test="month != 0">
-              and month = ${month}
-       </if >
-  </update >
-5) 列别名无法用于子查询
+解决方法：写到other_scripts中，不放在H2中执行
+  
+### 7. 列别名无法用于子查询
 如下SQL可以在MySQL中执行，但是不能再H2中执行，这里把查询出来的StartAreaCity字段作为StartAreaCityText字段的子查询使用
 
-  <sql id="Base_Column_List" >
+```sql
+<sql id="Base_Column_List" >
     Id, StartArea, ArrivalArea, Updater, UpdateTime, Status
        , (select pid from ddc_area where id = (select pid from ddc_area where id = ddc_line.StartArea)) StartAreaCity
        , (select area from ddc_area where id =  StartAreaCity) StartAreaCityText
-  </sql >
+</sql >
+```
+  
 只得修改成如下：
 
-  <sql id="Base_Column_List" >
+```sql
+<sql id="Base_Column_List" >
     Id, StartArea, ArrivalArea, Updater, UpdateTime, Status
        , (select pid from ddc_area where id = (select pid from ddc_area where id = ddc_line.StartArea)) StartAreaCity
        , (select area from ddc_area where id = (select pid from ddc_area where id = (select pid from ddc_area where id = ddc_line.StartArea))) StartAreaCityText
-  </sql >
-6) @:语法不支持
+</sql >
+```
+  
+### 8. @:语法不支持
 在MySQL中实现取行号时，采用了如下方法：
 
-  <select id="selectByExample" resultMap="BaseResultMap" parameterType="com.szyciov.entity.chargerule.PriceRuleExample" >
+```sql
+<select id="selectByExample" resultMap="BaseResultMap" parameterType="com.szyciov.entity.chargerule.PriceRuleExample" >
     select
     <if test="distinct" >
       distinct
@@ -108,18 +112,23 @@ H2 UNIQUE KEY不是表级别的，MySQL是表级别的，转为H2后容易出现
     <if test="page != null" >
       limit #{page.begin} , #{page.length}
     </if >
-  </select >
-其中@rownum的写法H2不支持，我只能采用了程序的方式来实现行号。
+</select >
+```
 
-但是H2支持@，参见http://www.h2database.com/html/grammar.html#set__。
+其中@rownum的写法H2不支持，只能采用了程序的方式来实现行号。
+
+
+**由于H2和MySQL的不同，在开发时，如果做了数据库改动，最好在提交前跑一下单元测试，看一下H2数据库建表时是否报错，确保不会因数据库的改动导致单测运行失败。**
 
 
 ---
 
-参考：
+### 参考
 
-https://github.com/h2database/h2database
+http://www.h2database.com/html/grammar.html
 
-https://blog.csdn.net/achuo/article/details/80624223
+http://www.H2database.com/html/features.html#compatibility
 
-http://www.h2database.com/html/features.html#compatibility
+http://www.alanzeng.cn/2016/07/unit-test-h2-database/
+
+http://matthewcasperson.blogspot.com/2013/07/exporting-from-MySQL-to-H2.html
